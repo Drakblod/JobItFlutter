@@ -21,7 +21,7 @@ class BaseScreen extends StatelessWidget {
     this.floatingActionButton,
     this.drawer,
     this.resizeToAvoidBottomInset = true,
-    this.showAiHelper = true,
+    this.showAiHelper = false,
   });
 
   @override
