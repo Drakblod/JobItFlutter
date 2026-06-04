@@ -31,7 +31,8 @@ class TimesheetEntry {
       jobId: json['JobId'] ?? json['jobId'] ?? '',
       workerId: json['WorkerId'] ?? json['workerId'] ?? '',
       workerName: json['WorkerName'] ?? json['workerName'] ?? '',
-      hoursWorked: (json['HoursWorked'] ?? json['hoursWorked'] ?? 0.0) as double,
+      hoursWorked: ((json['HoursWorked'] ?? json['hoursWorked'] ?? 0.0) as num).toDouble(),
+
       date: dt,
       notes: json['Notes'] ?? json['notes'],
       createdAt: cr,

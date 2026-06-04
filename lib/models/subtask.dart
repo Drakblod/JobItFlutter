@@ -38,8 +38,9 @@ class Subtask {
       title: json['Title'] ?? json['title'] ?? '',
       description: json['Description'] ?? json['description'] ?? '',
       isCompleted: json['IsCompleted'] ?? json['isCompleted'] ?? false,
-      latitude: (json['Latitude'] ?? json['latitude'] ?? 0.0) as double,
-      longitude: (json['Longitude'] ?? json['longitude'] ?? 0.0) as double,
+      latitude: ((json['Latitude'] ?? json['latitude'] ?? 0.0) as num).toDouble(),
+      longitude: ((json['Longitude'] ?? json['longitude'] ?? 0.0) as num).toDouble(),
+
       address: json['Address'] ?? json['address'],
       photoUrls: photos,
       createdAt: created,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/user.dart';
 import '../../services/theme_localization_service.dart';
+import '../../services/firebase_parser.dart';
 import '../widgets/base_screen.dart';
 import '../widgets/glass_card.dart';
 
@@ -85,11 +86,13 @@ class _WorkerListPageState extends State<WorkerListPage> {
                 final event = snapshot.data;
                 final List<AppUser> allUsers = [];
 
-                if (event != null && event.snapshot.exists && event.snapshot.value is Map) {
-                  final dataMap = event.snapshot.value as Map;
-                  dataMap.forEach((key, val) {
+                if (event != null && event.snapshot.exists) {
+                  final data = FirebaseParser.convertToMap(event.snapshot.value);
+                  data.forEach((key, val) {
                     try {
-                      allUsers.add(AppUser.fromJson(val as Map, key.toString()));
+                      if (val is Map) {
+                        allUsers.add(AppUser.fromJson(val, key));
+                      }
                     } catch (e) {
                       debugPrint('Error parsing user $key: $e');
                     }

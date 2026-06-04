@@ -1,11 +1,8 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../models/job.dart';
-import '../../models/subtask.dart';
 import '../../models/job_image.dart';
 import '../../models/job_message.dart';
 import '../../models/user.dart';
@@ -19,6 +16,8 @@ import '../widgets/base_screen.dart';
 import '../widgets/glass_card.dart';
 import 'add_subtask_page.dart';
 import 'log_hours_page.dart';
+import '../../models/route_point.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class JobDetailsPage extends StatefulWidget {
   final String jobId;
@@ -391,15 +390,49 @@ class _JobDetailsPageState extends State<JobDetailsPage> with SingleTickerProvid
               icon: const Icon(Icons.ac_unit),
               label: Text(context.tr('StartSnowracer')),
             ),
-          ] else ...[
-            // Normal Job Route Maps
+            const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/full_route_map',
-                  arguments: job.id,
-                );
+              onPressed: () async {
+                if (job.routePoints.isNotEmpty) {
+                  final points = List<RoutePoint>.from(job.routePoints)
+                    ..sort((a, b) => a.order.compareTo(b.order));
+                  
+                  final origin = points.first;
+                  final destination = points.last;
+
+                  String waypoints = '';
+                  if (points.length > 2) {
+                    final waypointPoints = points.sublist(1, points.length - 1);
+                    waypoints = '&waypoints=' + waypointPoints
+                        .map((p) => '${p.latitude},${p.longitude}')
+                        .join('%7C');
+                  }
+
+                  final urlStr = 'https://www.google.com/maps/dir/?api=1'
+                      '&origin=${origin.latitude},${origin.longitude}'
+                      '&destination=${destination.latitude},${destination.longitude}'
+                      '$waypoints'
+                      '&travelmode=driving';
+
+                  final uri = Uri.parse(urlStr);
+                  try {
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(context.tr('NoRouteMessage'))),
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    debugPrint('Error launching map: $e');
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(context.tr('NoRouteMessage'))),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: provider.secondaryColor,
@@ -410,7 +443,9 @@ class _JobDetailsPageState extends State<JobDetailsPage> with SingleTickerProvid
               icon: const Icon(Icons.map),
               label: Text(context.tr('ViewFullRouteMap')),
             ),
+            const SizedBox(height: 12),
           ],
+
         ],
       ),
     );
@@ -489,7 +524,46 @@ class _JobDetailsPageState extends State<JobDetailsPage> with SingleTickerProvid
                                       _toggleSubtask(sub.id, value);
                                     }
                                   },
+                            secondary: IconButton(
+                              icon: Icon(Icons.map, color: provider.primaryColor),
+                              onPressed: () async {
+                                if ((sub.address == null || sub.address!.isEmpty) &&
+                                    (sub.latitude == 0 && sub.longitude == 0)) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(context.tr('NoSubtaskLocationMessage'))),
+                                    );
+                                  }
+                                  return;
+                                }
+
+                                String url = '';
+                                if (sub.address != null && sub.address!.isNotEmpty) {
+                                  url = 'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(sub.address!)}&travelmode=driving';
+                                } else if (sub.latitude != 0 && sub.longitude != 0) {
+                                  url = 'https://www.google.com/maps/dir/?api=1&destination=${sub.latitude},${sub.longitude}&travelmode=driving';
+                                }
+
+                                if (url.isNotEmpty) {
+                                  final uri = Uri.parse(url);
+                                  try {
+                                    if (await canLaunchUrl(uri)) {
+                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                    } else {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text(context.tr('NoSubtaskLocationMessage'))),
+                                        );
+                                      }
+                                    }
+                                  } catch (e) {
+                                    debugPrint('Error launching map: $e');
+                                  }
+                                }
+                              },
+                            ),
                             controlAffinity: ListTileControlAffinity.leading,
+
                           ),
                         ),
                       );

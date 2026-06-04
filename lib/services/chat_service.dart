@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import '../models/job_message.dart';
+import 'firebase_parser.dart';
 
 class ChatService {
   final FirebaseDatabase _db = FirebaseDatabase.instance;
@@ -15,9 +16,12 @@ class ChatService {
     return _db.ref('jobs/$jobId/messages').onValue.map((event) {
       final List<JobMessage> list = [];
       final snapshot = event.snapshot;
-      if (snapshot.exists && snapshot.value is Map) {
-        (snapshot.value as Map).forEach((key, val) {
-          list.add(JobMessage.fromJson(val as Map, key.toString()));
+      if (snapshot.exists) {
+        final data = FirebaseParser.convertToMap(snapshot.value);
+        data.forEach((key, val) {
+          if (val is Map) {
+            list.add(JobMessage.fromJson(val, key));
+          }
         });
       }
       list.sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -28,12 +32,16 @@ class ChatService {
   Future<List<JobMessage>> getMessages(String jobId) async {
     final snapshot = await _db.ref('jobs/$jobId/messages').get();
     final List<JobMessage> list = [];
-    if (snapshot.exists && snapshot.value is Map) {
-      (snapshot.value as Map).forEach((key, val) {
-        list.add(JobMessage.fromJson(val as Map, key.toString()));
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          list.add(JobMessage.fromJson(val, key));
+        }
       });
     }
     list.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return list;
   }
 }
+

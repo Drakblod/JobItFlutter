@@ -135,7 +135,7 @@ class ThemeAndLocalizationProvider extends ChangeNotifier {
 
 extension BuildContextExtension on BuildContext {
   String tr(String key, [List<dynamic>? args]) {
-    return Provider.of<ThemeAndLocalizationProvider>(this, listen: true).translate(key, args);
+    return Provider.of<ThemeAndLocalizationProvider>(this, listen: false).translate(key, args);
   }
 
   ThemeAndLocalizationProvider get themeProvider {

@@ -115,6 +115,20 @@ class AppDrawer extends StatelessWidget {
                   },
                 ),
 
+                // Worked Hours Menu (Tidrapport)
+                ListTile(
+                  leading: Icon(Icons.timer, color: provider.primaryColor),
+                  title: Text(
+                    context.tr('MyWorkedHours'),
+                    style: TextStyle(color: provider.textPrimaryColor, fontSize: 16),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/worked_hours');
+                  },
+                ),
+
+
                 // Workforce List Menu (Foreman only)
                 if (authService.isForeman)
                   ListTile(
@@ -163,18 +177,23 @@ class AppDrawer extends StatelessWidget {
 
           // Logout Item at the bottom
           Divider(color: provider.borderColor.withOpacity(0.5)),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: Text(
-              context.tr('Logout'),
-              style: const TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: ListTile(
+                leading: const Icon(Icons.logout, color: Colors.red),
+                title: Text(
+                  context.tr('Logout'),
+                  style: const TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await authService.signOut();
+                },
+              ),
             ),
-            onTap: () async {
-              Navigator.pop(context);
-              await authService.signOut();
-            },
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );

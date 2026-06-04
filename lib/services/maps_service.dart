@@ -87,7 +87,7 @@ class MapsService {
         final data = json.decode(response.body);
         if (data['status'] == 'OK' && data['results'] != null && data['results'].isNotEmpty) {
           final location = data['results'][0]['geometry']['location'];
-          return [location['lat'] as double, location['lng'] as double];
+          return [(location['lat'] as num).toDouble(), (location['lng'] as num).toDouble()];
         }
       }
     } catch (e) {

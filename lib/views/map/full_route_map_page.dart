@@ -17,28 +17,20 @@ class FullRouteMapPage extends StatefulWidget {
 class _FullRouteMapPageState extends State<FullRouteMapPage> {
   final _jobService = JobService();
   GoogleMapController? _mapController;
+  late final Stream<Job?> _jobStream;
   Job? _job;
+  int _lastRoutePointsCount = -1;
 
   @override
   void initState() {
     super.initState();
-    _loadJob();
+    _jobStream = _jobService.streamJob(widget.jobId);
   }
 
   @override
   void dispose() {
     _mapController?.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadJob() async {
-    final snapshot = await _jobService.streamJob(widget.jobId).first;
-    if (snapshot != null) {
-      setState(() {
-        _job = snapshot;
-      });
-      _fitBounds();
-    }
   }
 
   void _fitBounds() {
@@ -84,66 +76,102 @@ class _FullRouteMapPageState extends State<FullRouteMapPage> {
   Widget build(BuildContext context) {
     final provider = Provider.of<ThemeAndLocalizationProvider>(context);
 
-    if (_job == null) {
-      return const BaseScreen(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    return StreamBuilder<Job?>(
+      stream: _jobStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const BaseScreen(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    final routeCoords = _job!.routePoints.map((p) => LatLng(p.latitude, p.longitude)).toList();
+        if (snapshot.hasError) {
+          return BaseScreen(
+            body: Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: TextStyle(color: provider.textPrimaryColor),
+              ),
+            ),
+          );
+        }
 
-    final Set<Polyline> polylines = {
-      Polyline(
-        polylineId: const PolylineId('full_route'),
-        points: routeCoords,
-        color: provider.primaryColor,
-        width: 6,
-      ),
-    };
+        final job = snapshot.data;
+        if (job == null) {
+          return BaseScreen(
+            body: Center(
+              child: Text(
+                'Job not found',
+                style: TextStyle(color: provider.textPrimaryColor),
+              ),
+            ),
+          );
+        }
 
-    final Set<Marker> markers = {};
-    if (_job!.routePoints.isNotEmpty) {
-      markers.add(
-        Marker(
-          markerId: const MarkerId('start'),
-          position: LatLng(_job!.routePoints.first.latitude, _job!.routePoints.first.longitude),
-          infoWindow: const InfoWindow(title: 'Start'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-        ),
-      );
-      if (_job!.routePoints.length > 1) {
-        markers.add(
-          Marker(
-            markerId: const MarkerId('end'),
-            position: LatLng(_job!.routePoints.last.latitude, _job!.routePoints.last.longitude),
-            infoWindow: const InfoWindow(title: 'End'),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        _job = job;
+
+        // Fit map bounds if controller is active and points count has changed
+        if (_mapController != null && job.routePoints.length != _lastRoutePointsCount) {
+          _lastRoutePointsCount = job.routePoints.length;
+          _fitBounds();
+        }
+
+        final routeCoords = job.routePoints.map((p) => LatLng(p.latitude, p.longitude)).toList();
+
+        final Set<Polyline> polylines = {
+          Polyline(
+            polylineId: const PolylineId('full_route'),
+            points: routeCoords,
+            color: provider.primaryColor,
+            width: 6,
+          ),
+        };
+
+        final Set<Marker> markers = {};
+        if (job.routePoints.isNotEmpty) {
+          markers.add(
+            Marker(
+              markerId: const MarkerId('start'),
+              position: LatLng(job.routePoints.first.latitude, job.routePoints.first.longitude),
+              infoWindow: const InfoWindow(title: 'Start'),
+              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+            ),
+          );
+          if (job.routePoints.length > 1) {
+            markers.add(
+              Marker(
+                markerId: const MarkerId('end'),
+                position: LatLng(job.routePoints.last.latitude, job.jobType == 'Snowracer' ? job.routePoints.last.longitude : job.routePoints.last.longitude),
+                infoWindow: const InfoWindow(title: 'End'),
+                icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+              ),
+            );
+          }
+        }
+
+        return Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            title: Text(job.title, style: TextStyle(color: provider.textPrimaryColor, fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            iconTheme: IconThemeData(color: provider.textPrimaryColor),
+          ),
+          body: GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: LatLng(job.latitude, job.longitude),
+              zoom: 13.0,
+            ),
+            onMapCreated: (controller) {
+              _mapController = controller;
+              _fitBounds();
+            },
+            polylines: polylines,
+            markers: markers,
+            zoomControlsEnabled: false,
           ),
         );
-      }
-    }
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(_job!.title, style: TextStyle(color: provider.textPrimaryColor, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: provider.textPrimaryColor),
-      ),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: LatLng(_job!.latitude, _job!.longitude),
-          zoom: 13.0,
-        ),
-        onMapCreated: (controller) {
-          _mapController = controller;
-          _fitBounds();
-        },
-        polylines: polylines,
-        markers: markers,
-        zoomControlsEnabled: false,
-      ),
+      },
     );
   }
 }

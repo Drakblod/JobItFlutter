@@ -4,6 +4,7 @@ import '../models/job.dart';
 import '../models/subtask.dart';
 import '../models/job_image.dart';
 import '../models/timesheet_entry.dart';
+import 'firebase_parser.dart';
 
 class JobService {
   final FirebaseDatabase _db = FirebaseDatabase.instance;
@@ -13,11 +14,14 @@ class JobService {
     return _db.ref('jobs').onValue.map((event) {
       final List<Job> jobs = [];
       final snapshot = event.snapshot;
-      if (snapshot.exists && snapshot.value is Map) {
-        (snapshot.value as Map).forEach((key, val) {
-          final job = Job.fromJson(val as Map, key.toString());
-          if (job.createdBy == foremanId && !job.isCompleted) {
-            jobs.add(job);
+      if (snapshot.exists) {
+        final data = FirebaseParser.convertToMap(snapshot.value);
+        data.forEach((key, val) {
+          if (val is Map) {
+            final job = Job.fromJson(val, key);
+            if (job.createdBy == foremanId && !job.isCompleted) {
+              jobs.add(job);
+            }
           }
         });
       }
@@ -29,11 +33,14 @@ class JobService {
     return _db.ref('jobs').onValue.map((event) {
       final List<Job> jobs = [];
       final snapshot = event.snapshot;
-      if (snapshot.exists && snapshot.value is Map) {
-        (snapshot.value as Map).forEach((key, val) {
-          final job = Job.fromJson(val as Map, key.toString());
-          if (job.assignedWorkers.containsKey(workerId) && !job.isCompleted) {
-            jobs.add(job);
+      if (snapshot.exists) {
+        final data = FirebaseParser.convertToMap(snapshot.value);
+        data.forEach((key, val) {
+          if (val is Map) {
+            final job = Job.fromJson(val, key);
+            if (job.assignedWorkers.containsKey(workerId) && !job.isCompleted) {
+              jobs.add(job);
+            }
           }
         });
       }
@@ -67,11 +74,14 @@ class JobService {
   Future<List<Job>> getJobsForForeman(String foremanId) async {
     final snapshot = await _db.ref('jobs').get();
     final List<Job> list = [];
-    if (snapshot.exists && snapshot.value is Map) {
-      (snapshot.value as Map).forEach((key, val) {
-        final job = Job.fromJson(val as Map, key.toString());
-        if (job.createdBy == foremanId && !job.isCompleted) {
-          list.add(job);
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          final job = Job.fromJson(val, key);
+          if (job.createdBy == foremanId && !job.isCompleted) {
+            list.add(job);
+          }
         }
       });
     }
@@ -81,11 +91,14 @@ class JobService {
   Future<List<Job>> getArchivedJobs(String foremanId) async {
     final snapshot = await _db.ref('jobs').get();
     final List<Job> list = [];
-    if (snapshot.exists && snapshot.value is Map) {
-      (snapshot.value as Map).forEach((key, val) {
-        final job = Job.fromJson(val as Map, key.toString());
-        if (job.createdBy == foremanId && job.isCompleted) {
-          list.add(job);
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          final job = Job.fromJson(val, key);
+          if (job.createdBy == foremanId && job.isCompleted) {
+            list.add(job);
+          }
         }
       });
     }
@@ -96,11 +109,14 @@ class JobService {
   Future<List<Job>> getJobsForWorker(String workerId) async {
     final snapshot = await _db.ref('jobs').get();
     final List<Job> list = [];
-    if (snapshot.exists && snapshot.value is Map) {
-      (snapshot.value as Map).forEach((key, val) {
-        final job = Job.fromJson(val as Map, key.toString());
-        if (job.assignedWorkers.containsKey(workerId) && !job.isCompleted) {
-          list.add(job);
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          final job = Job.fromJson(val, key);
+          if (job.assignedWorkers.containsKey(workerId) && !job.isCompleted) {
+            list.add(job);
+          }
         }
       });
     }
@@ -110,11 +126,14 @@ class JobService {
   Future<List<Job>> getArchivedJobsForWorker(String workerId) async {
     final snapshot = await _db.ref('jobs').get();
     final List<Job> list = [];
-    if (snapshot.exists && snapshot.value is Map) {
-      (snapshot.value as Map).forEach((key, val) {
-        final job = Job.fromJson(val as Map, key.toString());
-        if (job.assignedWorkers.containsKey(workerId) && job.isCompleted) {
-          list.add(job);
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          final job = Job.fromJson(val, key);
+          if (job.assignedWorkers.containsKey(workerId) && job.isCompleted) {
+            list.add(job);
+          }
         }
       });
     }
@@ -122,13 +141,17 @@ class JobService {
     return list;
   }
 
+
   Future<Job?> getJobByCode(String jobCode) async {
     final snapshot = await _db.ref('jobs').get();
-    if (snapshot.exists && snapshot.value is Map) {
-      for (var entry in (snapshot.value as Map).entries) {
-        final job = Job.fromJson(entry.value as Map, entry.key.toString());
-        if (job.jobCode.toUpperCase() == jobCode.toUpperCase()) {
-          return job;
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      for (var entry in data.entries) {
+        if (entry.value is Map) {
+          final job = Job.fromJson(entry.value as Map, entry.key);
+          if (job.jobCode.toUpperCase() == jobCode.toUpperCase()) {
+            return job;
+          }
         }
       }
     }
@@ -138,16 +161,20 @@ class JobService {
   Future<bool> isJobCodeAvailable(String code, [String? excludeJobId]) async {
     if (code.isEmpty) return false;
     final snapshot = await _db.ref('jobs').get();
-    if (snapshot.exists && snapshot.value is Map) {
-      for (var entry in (snapshot.value as Map).entries) {
-        final job = Job.fromJson(entry.value as Map, entry.key.toString());
-        if (job.jobCode.toUpperCase() == code.toUpperCase() && entry.key.toString() != excludeJobId) {
-          return false;
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      for (var entry in data.entries) {
+        if (entry.value is Map) {
+          final job = Job.fromJson(entry.value as Map, entry.key);
+          if (job.jobCode.toUpperCase() == code.toUpperCase() && entry.key != excludeJobId) {
+            return false;
+          }
         }
       }
     }
     return true;
   }
+
 
   Future<void> updateJobCode(String jobId, String newCode) async {
     await _db.ref('jobs/$jobId').update({
@@ -195,11 +222,14 @@ class JobService {
   Future<List<TimesheetEntry>> getTimesheetsForWorker(String workerId) async {
     final snapshot = await _db.ref('timesheets').get();
     final List<TimesheetEntry> list = [];
-    if (snapshot.exists && snapshot.value is Map) {
-      (snapshot.value as Map).forEach((key, val) {
-        final entry = TimesheetEntry.fromJson(val as Map, key.toString());
-        if (entry.workerId == workerId) {
-          list.add(entry);
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          final entry = TimesheetEntry.fromJson(val, key);
+          if (entry.workerId == workerId) {
+            list.add(entry);
+          }
         }
       });
     }
@@ -209,17 +239,49 @@ class JobService {
   Future<int> getJobCount(String userId, String role) async {
     final snapshot = await _db.ref('jobs').get();
     int count = 0;
-    if (snapshot.exists && snapshot.value is Map) {
-      (snapshot.value as Map).forEach((key, val) {
-        final job = Job.fromJson(val as Map, key.toString());
-        if (role == 'Foreman') {
-          if (job.createdBy == userId) count++;
-        } else {
-          if (job.assignedWorkers.containsKey(userId)) count++;
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          final job = Job.fromJson(val, key);
+          if (role == 'Foreman') {
+            if (job.createdBy == userId) count++;
+          } else {
+            if (job.assignedWorkers.containsKey(userId)) count++;
+          }
         }
       });
     }
     return count;
+  }
+
+
+  Future<List<TimesheetEntry>> getAllTimesheets() async {
+    final snapshot = await _db.ref('timesheets').get();
+    final List<TimesheetEntry> list = [];
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          list.add(TimesheetEntry.fromJson(val, key));
+        }
+      });
+    }
+    return list;
+  }
+
+  Future<Map<String, Job>> getJobsMap() async {
+    final snapshot = await _db.ref('jobs').get();
+    final Map<String, Job> map = {};
+    if (snapshot.exists) {
+      final data = FirebaseParser.convertToMap(snapshot.value);
+      data.forEach((key, val) {
+        if (val is Map) {
+          map[key] = Job.fromJson(val, key);
+        }
+      });
+    }
+    return map;
   }
 
   Future<void> deleteJob(String jobId) async {

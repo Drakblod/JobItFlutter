@@ -287,56 +287,62 @@ class _SnowracerLivePageState extends State<SnowracerLivePage> {
 
           // Bottom card overlay
           Positioned(
-            bottom: 24,
-            left: 20,
-            right: 20,
-            child: Card(
-              color: provider.backgroundColor.withOpacity(0.95),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: provider.borderColor),
-              ),
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              top: false,
               child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      context.tr('LiveTrackingActive'),
-                      style: TextStyle(color: provider.textPrimaryColor, fontWeight: FontWeight.bold, fontSize: 16),
-                      textAlign: TextAlign.center,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                child: Card(
+                  color: provider.backgroundColor.withOpacity(0.95),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: provider.borderColor),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          context.tr('LiveTrackingActive'),
+                          style: TextStyle(color: provider.textPrimaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _progressText,
+                          style: TextStyle(color: provider.textSecondaryColor, fontSize: 14),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _distancePlowed,
+                          style: TextStyle(color: provider.primaryColor, fontSize: 28, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _isSaving ? null : _handleFinish,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: provider.primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: _isSaving
+                              ? const SizedBox(
+                                  height: 16,
+                                  width: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
+                                )
+                              : Text(context.tr('FinishJob'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _progressText,
-                      style: TextStyle(color: provider.textSecondaryColor, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _distancePlowed,
-                      style: TextStyle(color: provider.primaryColor, fontSize: 28, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _isSaving ? null : _handleFinish,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: provider.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: _isSaving
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)),
-                            )
-                          : Text(context.tr('FinishJob'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

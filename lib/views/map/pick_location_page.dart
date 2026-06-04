@@ -71,44 +71,52 @@ class _PickLocationPageState extends State<PickLocationPage> {
             ),
           ),
 
-          // Instructions Card overlay
+          // Bottom Control Column
           Positioned(
-            bottom: 96,
-            left: 16,
-            right: 16,
-            child: Card(
-              color: provider.backgroundColor.withOpacity(0.9),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: provider.borderColor),
-              ),
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              top: false,
               child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  context.tr('MoveMapToPositionPin'),
-                  style: TextStyle(color: provider.textPrimaryColor, fontSize: 13, fontWeight: FontWeight.w600),
-                  textAlign: TextAlign.center,
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Instructions Card overlay
+                    Card(
+                      color: provider.backgroundColor.withOpacity(0.9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: provider.borderColor),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Text(
+                          context.tr('MoveMapToPositionPin'),
+                          style: TextStyle(color: provider.textPrimaryColor, fontSize: 13, fontWeight: FontWeight.w600),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // Save button action
+                    ElevatedButton(
+                      onPressed: _confirmLocation,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: provider.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        context.tr('ConfirmLocation'),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ),
-
-          // Save button action
-          Positioned(
-            bottom: 24,
-            left: 16,
-            right: 16,
-            child: ElevatedButton(
-              onPressed: _confirmLocation,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: provider.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                context.tr('ConfirmLocation'),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
           ),

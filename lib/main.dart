@@ -15,9 +15,25 @@ import 'views/map/snowracer_live_page.dart';
 import 'views/map/pick_location_page.dart';
 import 'views/map/full_route_map_page.dart';
 import 'views/job/image_editor_page.dart';
+import 'views/profile/worked_hours_page.dart';
+import 'package:google_maps_flutter_android/google_maps_flutter_android.dart';
+import 'package:google_maps_flutter_platform_interface/google_maps_flutter_platform_interface.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Google Maps Android platform implementation to force hybrid composition mode
+  // to avoid texture rendering buffer exhaustion errors (maxImages buffers).
+  final GoogleMapsFlutterPlatform mapsImplementation = GoogleMapsFlutterPlatform.instance;
+  if (mapsImplementation is GoogleMapsFlutterAndroid) {
+    mapsImplementation.useAndroidViewSurface = true;
+    try {
+      await mapsImplementation.initializeWithRenderer(AndroidMapRenderer.latest);
+    } catch (e) {
+      debugPrint('Google Maps Renderer Init Error: $e');
+    }
+  }
   
   // Initialize Firebase using inline configuration matching google-services.json
   await Firebase.initializeApp(
@@ -30,6 +46,7 @@ void main() async {
       storageBucket: Constants.firebaseStorageBucket,
     ),
   );
+
 
   runApp(
     MultiProvider(
@@ -77,6 +94,8 @@ class MyApp extends StatelessWidget {
         '/pick_location': (context) => const PickLocationPage(),
         '/full_route_map': (context) => FullRouteMapPage(jobId: ModalRoute.of(context)!.settings.arguments as String),
         '/image_editor': (context) => const ImageEditorPage(),
+        '/worked_hours': (context) => const WorkedHoursPage(),
+
       },
     );
   }

@@ -2,6 +2,7 @@ import 'route_point.dart';
 import 'subtask.dart';
 import 'job_image.dart';
 import 'job_message.dart';
+import '../services/firebase_parser.dart';
 
 class Job {
   String id;
@@ -53,18 +54,22 @@ class Job {
   factory Job.fromJson(Map<dynamic, dynamic> json, String id) {
     // Assigned Workers
     Map<String, String> workers = {};
-    if (json['AssignedWorkers'] != null && json['AssignedWorkers'] is Map) {
-      (json['AssignedWorkers'] as Map).forEach((key, val) {
-        workers[key.toString()] = val.toString();
+    if (json['AssignedWorkers'] != null) {
+      final workersMap = FirebaseParser.convertToMap(json['AssignedWorkers']);
+      workersMap.forEach((key, val) {
+        workers[key] = val.toString();
       });
     }
 
     // Route points
     List<RoutePoint> pts = [];
-    if (json['RoutePoints'] != null && json['RoutePoints'] is List) {
-      for (var item in json['RoutePoints']) {
-        if (item != null) {
-          pts.add(RoutePoint.fromJson(item as Map));
+    if (json['RoutePoints'] != null) {
+      final ptsMap = FirebaseParser.convertToMap(json['RoutePoints']);
+      final sortedKeys = ptsMap.keys.toList()..sort((a, b) => (int.tryParse(a) ?? 0).compareTo(int.tryParse(b) ?? 0));
+      for (var key in sortedKeys) {
+        final val = ptsMap[key];
+        if (val is Map) {
+          pts.add(RoutePoint.fromJson(val));
         }
       }
     }
@@ -83,27 +88,37 @@ class Job {
 
     // Images
     Map<String, JobImage> imgs = {};
-    if (json['images'] != null && json['images'] is Map) {
-      (json['images'] as Map).forEach((k, v) {
-        imgs[k.toString()] = JobImage.fromJson(v as Map, k.toString());
+    if (json['images'] != null) {
+      final imgsMap = FirebaseParser.convertToMap(json['images']);
+      imgsMap.forEach((k, v) {
+        if (v is Map) {
+          imgs[k] = JobImage.fromJson(v, k);
+        }
       });
     }
 
     // Messages
     Map<String, JobMessage> msgs = {};
-    if (json['messages'] != null && json['messages'] is Map) {
-      (json['messages'] as Map).forEach((k, v) {
-        msgs[k.toString()] = JobMessage.fromJson(v as Map, k.toString());
+    if (json['messages'] != null) {
+      final msgsMap = FirebaseParser.convertToMap(json['messages']);
+      msgsMap.forEach((k, v) {
+        if (v is Map) {
+          msgs[k] = JobMessage.fromJson(v, k);
+        }
       });
     }
 
     // Subtasks
     Map<String, Subtask> subs = {};
-    if (json['subtasks'] != null && json['subtasks'] is Map) {
-      (json['subtasks'] as Map).forEach((k, v) {
-        subs[k.toString()] = Subtask.fromJson(v as Map, k.toString());
+    if (json['subtasks'] != null) {
+      final subsMap = FirebaseParser.convertToMap(json['subtasks']);
+      subsMap.forEach((k, v) {
+        if (v is Map) {
+          subs[k] = Subtask.fromJson(v, k);
+        }
       });
     }
+
 
     return Job(
       id: id,
@@ -114,8 +129,9 @@ class Job {
       createdBy: json['CreatedBy'] ?? json['createdBy'] ?? '',
       assignedWorkers: workers,
       jobCode: json['JobCode'] ?? json['jobCode'] ?? '',
-      latitude: (json['Latitude'] ?? json['latitude'] ?? 0.0) as double,
-      longitude: (json['Longitude'] ?? json['longitude'] ?? 0.0) as double,
+      latitude: ((json['Latitude'] ?? json['latitude'] ?? 0.0) as num).toDouble(),
+      longitude: ((json['Longitude'] ?? json['longitude'] ?? 0.0) as num).toDouble(),
+
       jobType: json['JobType'] ?? json['jobType'] ?? 'Normal',
       routePoints: pts,
       userSpeech: json['UserSpeech'] ?? json['userSpeech'],

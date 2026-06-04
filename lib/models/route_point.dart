@@ -14,8 +14,9 @@ class RoutePoint {
   factory RoutePoint.fromJson(Map<dynamic, dynamic> json) {
     return RoutePoint(
       order: json['Order'] ?? json['order'] ?? 0,
-      latitude: (json['Latitude'] ?? json['latitude'] ?? 0.0) as double,
-      longitude: (json['Longitude'] ?? json['longitude'] ?? 0.0) as double,
+      latitude: ((json['Latitude'] ?? json['latitude'] ?? 0.0) as num).toDouble(),
+      longitude: ((json['Longitude'] ?? json['longitude'] ?? 0.0) as num).toDouble(),
+
       isCompleted: json['IsCompleted'] ?? json['isCompleted'] ?? false,
     );
   }

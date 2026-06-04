@@ -189,7 +189,8 @@ class _AiHelperOverlayState extends State<AiHelperOverlay> {
     }
 
     if (action == 'log_hours') {
-      final hours = (response['hours'] ?? 1.0) as double;
+      final hours = ((response['hours'] ?? 1.0) as num).toDouble();
+
       final notes = response['notes'] as String?;
       
       if (matchedJob == null || matchedJob.id.isEmpty) {
